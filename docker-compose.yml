@@ -1,0 +1,52 @@
+services:
+  # ── Backend Agents ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "9001:9001"
+      - "9002:9002"
+      - "9003:9003"
+      - "9004:9004"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/.well-known/agent-card.json"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    networks:
+      - pastel-net
+
+  # ── Frontend (Next.js + CopilotKit) ────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_FILA_AGENT_URL=http://backend:9001
+        - NEXT_PUBLIC_COZINHA_AGENT_URL=http://backend:9002
+        - NEXT_PUBLIC_PREPARO_AGENT_URL=http://backend:9003
+        - NEXT_PUBLIC_ENTREGA_AGENT_URL=http://backend:9004
+    ports:
+      - "3000:3000"
+    environment:
+      - FILA_AGENT_URL=http://backend:9001
+      - COZINHA_AGENT_URL=http://backend:9002
+      - PREPARO_AGENT_URL=http://backend:9003
+      - ENTREGA_AGENT_URL=http://backend:9004
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pastel-net
+
+networks:
+  pastel-net:
+    driver: bridge
