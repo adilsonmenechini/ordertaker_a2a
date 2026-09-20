@@ -41,7 +41,10 @@ def plan_with_llm(user_message: str) -> dict | None:
         return None
 
     try:
-        client = OpenAI(api_key=api_key)
+        client = OpenAI(
+            api_key=api_key,
+            base_url=os.getenv("OPENAI_BASE_URL"),
+        )
         response = client.chat.completions.create(
             model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
             messages=[
