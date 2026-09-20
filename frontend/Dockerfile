@@ -1,30 +1,40 @@
+# syntax = docker/dockerfile:1.4
+
 FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
+
+# Copy package files first for better layer caching
 COPY package.json package-lock.json ./
-RUN npm ci --prefer-offline --legacy-peer-deps
+
+# Use BuildKit cache mount for npm cache
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --prefer-offline --legacy-peer-deps
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+# Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source code
 COPY . .
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/docs/app/building-your-application/telemetry
-# Disable the telemetry during the build.
+# Disable Next.js telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+# Use BuildKit cache mount for Next.js build cache
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-# Disable Next.js telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs
