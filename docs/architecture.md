@@ -6,28 +6,42 @@ Sistema de pedidos de pastel usando Agent-to-Agent (A2A) protocol com frontend C
 
 ## Fluxo
 
-1. Usuário digita pedido no chat CopilotKit
-2. CopilotKit encaminha via AG-UI para o Orquestrador
-3. Orquestrador usa LLM (ou fallback determinístico) para parse do pedido
-4. Orquestrador despacha para agentes A2A em sequência:
-   - Fila (9001) → Cozinha (9002) → Preparo (9003) → Entrega (9004)
-5. Respostas voltam ao frontend via SSE
-6. Timeline atualiza em tempo real
+```
+Browser → CopilotKit (React) → Next.js API Route → BuiltInAgent (LLM + tools)
+                                                        ↓
+                                              4 A2A JSON-RPC tools
+                                                        ↓
+                              Backend (4 FastAPI agents: Fila → Cozinha → Preparo → Entrega)
+```
 
-## Agentes
+1. Usuário digita pedido no chat CopilotKit
+2. CopilotKit envia para BuiltInAgent (LLM orquestrador)
+3. LLM chama tools na ordem: fila → cozinha → preparo → entrega
+4. Cada tool faz HTTP JSON-RPC para o agente A2A correspondente
+5. Respostas voltam ao frontend via SSE
+6. Timeline atualiza em tempo real por detecção de keywords
+
+## Agentes A2A
 
 | Agente | Porta | Padrão | Função |
 |--------|-------|--------|--------|
 | Fila | 9001 | Instant | Recebe e enfileira pedido |
-| Cozinha | 9002 | Streaming | Prepara com progresso |
-| Preparo | 9003 | Long-running | Embala com polling |
+| Cozinha | 9002 | Streaming | Prepara com progresso (6 steps) |
+| Preparo | 9003 | Instant | Embala o pedido |
 | Entrega | 9004 | Instant | Confirma entrega |
+
+## Protocolo
+
+- **Backend ↔ Frontend**: AG-UI (CopilotKit SSE)
+- **Backend → A2A Agents**: JSON-RPC 2.0 sobre HTTP (`/a2a/jsonrpc`)
+- **Agent Cards**: `/.well-known/agent-card.json`
 
 ## Tech Stack
 
-- Backend: Python 3.10+, FastAPI, a2a-sdk v1.0
-- Frontend: Next.js 14+, CopilotKit v2, Tailwind CSS
-- Protocolo: A2A v1.0 + AG-UI
+- **Backend**: Python 3.11+, FastAPI, a2a-sdk v1.1.4, uvicorn
+- **Frontend**: Next.js 16.3.5, CopilotKit v1.73, Tailwind CSS v4
+- **Runtime**: BuiltInAgent (Vercel AI SDK via @ai-sdk/openai) + 4 server-side tools
+- **LLM**: Configurável via `OPENAI_BASE_URL` + `LLM_MODEL` (OpenRouter, OpenAI, etc.)
 
 ## Cardápio de Pastéis
 
@@ -35,7 +49,7 @@ Sistema de pedidos de pastel usando Agent-to-Agent (A2A) protocol com frontend C
 - 🥩 Carne
 - 🍗 Frango
 - 🧀 Queijo
-- 🥬 Palmito
+- 🌱 Palmito
 - 🥩🧀 Carne com Queijo
 
 ### Bordas
@@ -45,18 +59,18 @@ Sistema de pedidos de pastel usando Agent-to-Agent (A2A) protocol com frontend C
 
 ## Como Rodar
 
-### Backend
+### Docker (recomendado)
 ```bash
-cd backend
-pip install -r requirements.txt
-python run_all.py
+docker compose up -d --build
 ```
 
-### Frontend
+### Local
 ```bash
-cd frontend
-npm install
-npm run dev
+# Backend
+cd backend && source .venv/bin/activate && python run_all.py
+
+# Frontend
+cd frontend && npm run dev
 ```
 
 ### Acessar

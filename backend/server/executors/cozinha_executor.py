@@ -29,7 +29,7 @@ class CozinhaExecutor(AgentExecutor):
 
         if not active:
             msg = "🍳 Nenhum pedido na cozinha no momento."
-            await event_queue.enqueue_event(Message(role=Role.agent, parts=[Part(text=msg)]))
+            await event_queue.enqueue_event(Message(role=Role.ROLE_AGENT, parts=[Part(text=msg)]))
             return
 
         order = active[-1]
@@ -45,13 +45,13 @@ class CozinhaExecutor(AgentExecutor):
         ]
 
         for step in steps:
-            await event_queue.enqueue_event(Message(role=Role.agent, parts=[Part(text=step)]))
+            await event_queue.enqueue_event(Message(role=Role.ROLE_AGENT, parts=[Part(text=step)]))
             await asyncio.sleep(1.5)
 
         order.advance()  # COZINHA -> PREPARO
         await event_queue.enqueue_event(
             Message(
-                role=Role.agent,
+                role=Role.ROLE_AGENT,
                 parts=[Part(text=f"🎯 Pedido #{order.id} saiu da cozinha e está no preparo.")],
             )
         )

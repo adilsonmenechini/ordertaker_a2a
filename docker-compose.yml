@@ -12,7 +12,7 @@ services:
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
-      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - LLM_MODEL=${LLM_MODEL:-openai/gpt-4o-mini}
       - FILA_PORT=${FILA_PORT:-9001}
       - COZINHA_PORT=${COZINHA_PORT:-9002}
       - PREPARO_PORT=${PREPARO_PORT:-9003}
@@ -40,6 +40,8 @@ services:
         - NEXT_PUBLIC_ENTREGA_AGENT_URL=http://backend:${ENTREGA_PORT:-9004}
     ports:
       - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - FILA_AGENT_URL=http://backend:${FILA_PORT:-9001}
       - COZINHA_AGENT_URL=http://backend:${COZINHA_PORT:-9002}
@@ -48,6 +50,7 @@ services:
       - ORCHESTRATOR_URL=http://backend:${FILA_PORT:-9001}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - LLM_MODEL=${LLM_MODEL:-openai/gpt-4o-mini}
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
     depends_on:
       backend:

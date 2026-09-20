@@ -29,7 +29,7 @@ class PreparoExecutor(AgentExecutor):
 
         if not active:
             await event_queue.enqueue_event(
-                Message(role=Role.agent, parts=[Part(text="📦 Nenhum pedido para preparar.")])
+                Message(role=Role.ROLE_AGENT, parts=[Part(text="📦 Nenhum pedido para preparar.")])
             )
             return
 
@@ -42,10 +42,13 @@ class PreparoExecutor(AgentExecutor):
         ]
 
         for msg in steps:
-            await event_queue.enqueue_event(Message(role=Role.agent, parts=[Part(text=msg)]))
+            await event_queue.enqueue_event(Message(role=Role.ROLE_AGENT, parts=[Part(text=msg)]))
             await asyncio.sleep(2)
 
         order.advance()  # PREPARO -> ENTREGA
         await event_queue.enqueue_event(
-            Message(role=Role.agent, parts=[Part(text=f"🚗 Pedido #{order.id} saiu para entrega!")])
+            Message(
+                role=Role.ROLE_AGENT,
+                parts=[Part(text=f"🚗 Pedido #{order.id} saiu para entrega!")],
+            )
         )

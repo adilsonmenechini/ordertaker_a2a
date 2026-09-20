@@ -10,18 +10,18 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
-import uvicorn
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from a2a.server.routes import create_jsonrpc_routes, create_agent_card_routes
-from a2a.server.request_handlers import DefaultRequestHandler
-from a2a.server.tasks import InMemoryTaskStore
-from a2a.types import AgentCard, AgentSkill, AgentCapabilities
+import uvicorn  # noqa: E402
+from a2a.server.request_handlers import DefaultRequestHandler  # noqa: E402
+from a2a.server.routes import create_agent_card_routes, create_jsonrpc_routes  # noqa: E402
+from a2a.server.tasks import InMemoryTaskStore  # noqa: E402
+from a2a.types import AgentCapabilities, AgentCard, AgentSkill  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
-from server.executors.fila_executor import FilaExecutor
-from server.executors.cozinha_executor import CozinhaExecutor
-from server.executors.preparo_executor import PreparoExecutor
-from server.executors.entrega_executor import EntregaExecutor
+from server.executors.cozinha_executor import CozinhaExecutor  # noqa: E402
+from server.executors.entrega_executor import EntregaExecutor  # noqa: E402
+from server.executors.fila_executor import FilaExecutor  # noqa: E402
+from server.executors.preparo_executor import PreparoExecutor  # noqa: E402
 
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
 
@@ -125,9 +125,9 @@ def create_app(agent_type: str) -> FastAPI:
 
     # Alias: CopilotKit fetches /.well-known/agent.json but SDK serves agent-card.json
     # Also inject the `url` field that CopilotKit A2A middleware requires
+    from a2a.server.request_handlers.response_helpers import agent_card_to_dict
     from starlette.requests import Request as StarletteRequest
     from starlette.responses import JSONResponse as StarletteJSONResponse
-    from a2a.server.request_handlers.response_helpers import agent_card_to_dict
 
     def _card_with_url() -> dict:
         card_dict = agent_card_to_dict(card)
@@ -144,7 +144,9 @@ def create_app(agent_type: str) -> FastAPI:
     async def agent_card_standard(request: StarletteRequest) -> StarletteJSONResponse:
         return StarletteJSONResponse(_card_with_url())
 
-    app.routes.append(Route("/.well-known/agent-card.json", endpoint=agent_card_standard, methods=["GET"]))
+    app.routes.append(
+        Route("/.well-known/agent-card.json", endpoint=agent_card_standard, methods=["GET"])
+    )
 
     return app
 

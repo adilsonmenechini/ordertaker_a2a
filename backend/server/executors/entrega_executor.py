@@ -24,7 +24,7 @@ class EntregaExecutor(AgentExecutor):
 
         if not active:
             await event_queue.enqueue_event(
-                Message(role=Role.agent, parts=[Part(text="🚚 Nenhum pedido para entregar.")])
+                Message(role=Role.ROLE_AGENT, parts=[Part(text="🚚 Nenhum pedido para entregar.")])
             )
             return
 
@@ -33,7 +33,7 @@ class EntregaExecutor(AgentExecutor):
 
         await event_queue.enqueue_event(
             Message(
-                role=Role.agent,
+                role=Role.ROLE_AGENT,
                 parts=[
                     Part(
                         text=(

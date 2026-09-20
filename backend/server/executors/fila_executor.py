@@ -84,4 +84,4 @@ class FilaExecutor(AgentExecutor):
 
         order.advance()  # PEDIDO -> FILA
 
-        await event_queue.enqueue_event(Message(role=Role.agent, parts=[Part(text=reply)]))
+        await event_queue.enqueue_event(Message(role=Role.ROLE_AGENT, parts=[Part(text=reply)]))
