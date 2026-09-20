@@ -21,12 +21,15 @@ const STEP_KEYWORDS: Record<string, number> = {
   preparando: 2,
 };
 
-function detectStep(text: string): number {
+export function detectStep(text: string): number {
   const lower = text.toLowerCase();
+  let maxStep = -1;
   for (const [keyword, step] of Object.entries(STEP_KEYWORDS)) {
-    if (lower.includes(keyword)) return step;
+    if (lower.includes(keyword) && step > maxStep) {
+      maxStep = step;
+    }
   }
-  return -1;
+  return maxStep;
 }
 
 interface ChatProps {
