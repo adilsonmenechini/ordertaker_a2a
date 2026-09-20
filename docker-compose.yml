@@ -11,6 +11,7 @@ services:
       - "${ENTREGA_PORT:-9004}:9004"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
       - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
       - FILA_PORT=${FILA_PORT:-9001}
       - COZINHA_PORT=${COZINHA_PORT:-9002}
@@ -46,6 +47,7 @@ services:
       - ENTREGA_AGENT_URL=http://backend:${ENTREGA_PORT:-9004}
       - ORCHESTRATOR_URL=http://backend:${FILA_PORT:-9001}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
     depends_on:
       backend:
