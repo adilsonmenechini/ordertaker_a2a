@@ -8,8 +8,17 @@ import subprocess
 import sys
 import time
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 AGENTS = ["fila", "cozinha", "preparo", "entrega"]
-PORTS = {"fila": 9001, "cozinha": 9002, "preparo": 9003, "entrega": 9004}
+PORTS = {
+    "fila": int(os.getenv("FILA_PORT", "9001")),
+    "cozinha": int(os.getenv("COZINHA_PORT", "9002")),
+    "preparo": int(os.getenv("PREPARO_PORT", "9003")),
+    "entrega": int(os.getenv("ENTREGA_PORT", "9004")),
+}
 
 
 def main():

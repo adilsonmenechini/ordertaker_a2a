@@ -6,11 +6,16 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Pastelaria Virtual — A2A Order System",
-  description: "Sistema de pedidos de pastel com A2A protocol e CopilotKit",
+  title: "Pastelaria Virtual — Peça seu pastel",
+  description:
+    "Sistema de pedidos de pastel com agentes A2A. Faça seu pedido pelo chat e acompanhe em tempo real.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="pt-BR">
       <body className={inter.className}>

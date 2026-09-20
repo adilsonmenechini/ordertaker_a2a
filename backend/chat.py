@@ -8,6 +8,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import httpx
 
 from client.sdk_client import AGENT_URLS, discover_agents, extract_reply_text, send_message

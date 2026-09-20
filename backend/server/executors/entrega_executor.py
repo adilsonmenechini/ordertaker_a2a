@@ -15,6 +15,9 @@ from models.order import OrderStatus, list_orders
 
 
 class EntregaExecutor(AgentExecutor):
+    async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
+        pass
+
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         orders = list_orders()
         active = [o for o in orders if o.status == OrderStatus.ENTREGA]

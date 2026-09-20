@@ -16,6 +16,9 @@ from models.order import OrderStatus, list_orders
 
 
 class PreparoExecutor(AgentExecutor):
+    async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
+        pass
+
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         for part in context.message.parts:
             if hasattr(part, "text") and part.text:

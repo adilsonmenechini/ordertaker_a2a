@@ -5,6 +5,7 @@ import {
 } from "@copilotkit/runtime/v2";
 import { HttpAgent } from "@ag-ui/client";
 import { A2AMiddlewareAgent } from "@ag-ui/a2a-middleware";
+import { NextRequest, NextResponse } from "next/server";
 
 const filaAgentUrl = process.env.FILA_AGENT_URL || "http://localhost:9001";
 const cozinhaAgentUrl = process.env.COZINHA_AGENT_URL || "http://localhost:9002";
@@ -46,7 +47,7 @@ const a2aMiddlewareAgent = new A2AMiddlewareAgent({
 
 const runtime = new CopilotRuntime({
   agents: {
-    a2a_chat: a2aMiddlewareAgent,
+    default: a2aMiddlewareAgent,
   },
   runner: new InMemoryAgentRunner(),
 });
@@ -56,7 +57,45 @@ const handler = createCopilotRuntimeHandler({
   basePath: "/api/copilotkit",
 });
 
-export const GET = handler;
-export const POST = handler;
-export const PATCH = handler;
-export const DELETE = handler;
+// CORS headers for external access
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
+}
+
+export async function GET(request: NextRequest) {
+  const response = await handler(request);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
+
+export async function POST(request: NextRequest) {
+  const response = await handler(request);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
+
+export async function PATCH(request: NextRequest) {
+  const response = await handler(request);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
+
+export async function DELETE(request: NextRequest) {
+  const response = await handler(request);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}

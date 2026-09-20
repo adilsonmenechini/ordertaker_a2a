@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import { CopilotSidebar } from "@copilotkit/react-core/v2";
-import { useFrontendTool } from "@copilotkit/react-core/v2";
-import { Timeline } from "./Timeline";
-import { MessageToA2A, MessageFromA2A } from "./A2AMessage";
+import React, { useEffect, useRef } from "react";
+import { useCopilotChatHeadless_c, useCopilotAction } from "@copilotkit/react-core";
+import { CopilotChat } from "@copilotkit/react-ui";
+import "@copilotkit/react-ui/styles.css";
+import { useOrderState } from "./OrderState";
+import { CardapioCard } from "./CardapioCard";
 
 const STEP_KEYWORDS: Record<string, number> = {
   pedido: 0,
@@ -13,6 +14,11 @@ const STEP_KEYWORDS: Record<string, number> = {
   preparo: 3,
   entrega: 4,
   concluido: 4,
+  entregue: 4,
+  pronto: 3,
+  embalando: 3,
+  fritando: 2,
+  preparando: 2,
 };
 
 function detectStep(text: string): number {
@@ -23,63 +29,81 @@ function detectStep(text: string): number {
   return -1;
 }
 
-export function Chat() {
-  const [currentStep, setCurrentStep] = useState(-1);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+interface ChatProps {
+  className?: string;
+}
 
-  useFrontendTool({
-    name: "send_message_to_a2a_agent",
-    description: "Envia uma mensagem para um agente A2A",
-    available: "frontend",
-    parameters: [
-      { name: "agentName", type: "string", description: "Nome do agente A2A" },
-      { name: "task", type: "string", description: "Mensagem para o agente" },
-    ],
-    render: (props) => {
-      const step = detectStep(props.args.task || "");
-      if (step >= 0) {
-        setCurrentStep(step);
-        setCompletedSteps((prev) => {
-          const newCompleted = [...prev];
-          for (let i = 0; i < step; i++) {
-            if (!newCompleted.includes(i)) newCompleted.push(i);
-          }
-          return newCompleted;
-        });
-      }
+export function Chat({ className }: ChatProps) {
+  const lastMessageCount = useRef(0);
+  const { messages } = useCopilotChatHeadless_c();
+  const { setCurrentStep } = useOrderState();
 
-      return (
-        <>
-          <MessageToA2A {...props} />
-          <MessageFromA2A {...props} />
-        </>
-      );
+  // Register the cardápio tool — renders visual card in chat
+  useCopilotAction({
+    name: "mostrar_cardapio",
+    description: "Mostra o cardápio completo da pastelaria com sabores, bordas e exemplos de pedido",
+    parameters: [],
+    handler: async () => {
+      // The render function handles the visual output
     },
+    render: () => <CardapioCard />,
   });
 
-  return (
-    <div className="flex h-screen">
-      <div className="w-full max-w-2xl mx-auto flex flex-col">
-        {/* Timeline */}
-        <div className="border-b bg-white sticky top-0 z-10">
-          <Timeline
-            currentStep={currentStep}
-            completedSteps={completedSteps}
-          />
-        </div>
+  // Track messages and update timeline step
+  useEffect(() => {
+    if (!messages || messages.length === lastMessageCount.current) return;
+    lastMessageCount.current = messages.length;
 
-        {/* Chat */}
-        <div className="flex-1 overflow-hidden">
-          <CopilotSidebar
-            defaultOpen={true}
-            labels={{
-              title: "🥟 Pastelaria Virtual",
-              initial:
-                "Olá! Bem-vindo à Pastelaria Virtual! 🥟\n\nFaça seu pedido! Exemplo:\n- 2 pastéis de carne com borda de catupiry\n- 1 pastel de frango e 1 de queijo\n- Pastel de palmito sem cebola",
-            }}
-          />
-        </div>
-      </div>
+    let maxStep = -1;
+    for (const msg of messages) {
+      const text =
+        typeof msg.content === "string"
+          ? msg.content
+          : Array.isArray(msg.content)
+            ? msg.content
+                .filter((p: { type: string }) => p.type === "text")
+                .map((p: { text: string }) => p.text)
+                .join(" ")
+            : "";
+
+      const step = detectStep(text);
+      if (step > maxStep) maxStep = step;
+    }
+
+    if (maxStep >= 0) {
+      setCurrentStep(maxStep);
+    }
+  }, [messages, setCurrentStep]);
+
+  return (
+    <div className={className}>
+      <CopilotChat
+        className="h-full w-full"
+        instructions={`Você é um atendente de pastelaria virtual. Gerencia pedidos de pastel usando agentes especializados.
+
+IMPRESCINDÍVEL: Logo no início da conversa, SEMPRE chame a tool 'mostrar_cardapio' para exibir o cardápio visual ao cliente antes de qualquer interação.
+
+FLUXO DO PEDIDO:
+1. Agente Fila — Recebe o pedido e posiciona na fila
+2. Agente Cozinha — Prepara o pastel (streaming com progresso)
+3. Agente Preparo — Embala o pedido
+4. Agente Entrega — Entrega ao cliente
+
+SABORES: carne, frango, queijo, palmito, carne_com_queijo
+BORDAS: normal, queijo, catupiry
+
+REGRAS:
+- Chame os agentes UM POR VEZ, espere o resultado antes de chamar o próximo
+- Passe informações do agente anterior para o próximo
+- Use o agente Fila primeiro para receber o pedido
+- Depois Cozinha, Preparo e Entrega em sequência
+- Ao final, confirme a entrega ao cliente
+- Responda sempre em português brasileiro`}
+        labels={{
+          placeholder: "Faça seu pedido de pastel... 🥟",
+          initial: "Olá! 🥟 Bem-vindo à Pastelaria Virtual! Como posso te ajudar?",
+        }}
+      />
     </div>
   );
 }

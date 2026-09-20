@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import uuid
 from collections.abc import Callable
 from typing import Any
@@ -12,10 +13,10 @@ import httpx
 A2A_HEADERS = {"A2A-Version": "1.0", "Content-Type": "application/json"}
 
 AGENT_URLS = {
-    "fila": "http://127.0.0.1:9001",
-    "cozinha": "http://127.0.0.1:9002",
-    "preparo": "http://127.0.0.1:9003",
-    "entrega": "http://127.0.0.1:9004",
+    "fila": os.getenv("FILA_AGENT_URL", "http://127.0.0.1:9001"),
+    "cozinha": os.getenv("COZINHA_AGENT_URL", "http://127.0.0.1:9002"),
+    "preparo": os.getenv("PREPARO_AGENT_URL", "http://127.0.0.1:9003"),
+    "entrega": os.getenv("ENTREGA_AGENT_URL", "http://127.0.0.1:9004"),
 }
 
 STREAMING_SKILLS = {"preparar_pastel"}

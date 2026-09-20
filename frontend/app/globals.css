@@ -1,12 +1,87 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --pv-cream: #fff8f0;
+  --pv-amber: #f5a623;
+  --pv-amber-dark: #d4891a;
+  --pv-brown: #5c3d2e;
+  --pv-brown-light: #8b6f5e;
+  --pv-pink: #ffe0e6;
+  --pv-green: #7cb69d;
+  --pv-green-dark: #5a9a7d;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--pv-cream);
+  color: var(--pv-brown);
+}
+
+/* ── Custom scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4c4b0;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b0a090;
+}
+
+/* ── CopilotChat overrides ────────────────────────────────── */
+.copilotKitChat {
+  --copilot-kit-primary-color: var(--pv-amber) !important;
+  --copilot-kit-contrast-color: var(--pv-cream) !important;
+  background: var(--pv-cream) !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+}
+
+.copilotKitChatInputContainer {
+  background: white !important;
+  border-top: 1px solid #f0e6da !important;
+}
+
+.copilotKitChatInput {
+  border-radius: 12px !important;
+  border: 1.5px solid #e8ddd0 !important;
+  background: white !important;
+  font-size: 14px !important;
+  padding: 12px 16px !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.copilotKitChatInput:focus {
+  border-color: var(--pv-amber) !important;
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15) !important;
+  outline: none !important;
+}
+
+.copilotKitSendMessageButton {
+  background: var(--pv-amber) !important;
+  color: white !important;
+  border-radius: 10px !important;
+  transition: background 0.2s, transform 0.1s !important;
+}
+
+.copilotKitSendMessageButton:hover {
+  background: var(--pv-amber-dark) !important;
+  transform: scale(1.05) !important;
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -5,19 +5,24 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "9001:9001"
-      - "9002:9002"
-      - "9003:9003"
-      - "9004:9004"
+      - "${FILA_PORT:-9001}:9001"
+      - "${COZINHA_PORT:-9002}:9002"
+      - "${PREPARO_PORT:-9003}:9003"
+      - "${ENTREGA_PORT:-9004}:9004"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - FILA_PORT=${FILA_PORT:-9001}
+      - COZINHA_PORT=${COZINHA_PORT:-9002}
+      - PREPARO_PORT=${PREPARO_PORT:-9003}
+      - ENTREGA_PORT=${ENTREGA_PORT:-9004}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9001/.well-known/agent-card.json"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
     networks:
       - pastel-net
@@ -28,18 +33,20 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_FILA_AGENT_URL=http://backend:9001
-        - NEXT_PUBLIC_COZINHA_AGENT_URL=http://backend:9002
-        - NEXT_PUBLIC_PREPARO_AGENT_URL=http://backend:9003
-        - NEXT_PUBLIC_ENTREGA_AGENT_URL=http://backend:9004
+        - NEXT_PUBLIC_FILA_AGENT_URL=http://backend:${FILA_PORT:-9001}
+        - NEXT_PUBLIC_COZINHA_AGENT_URL=http://backend:${COZINHA_PORT:-9002}
+        - NEXT_PUBLIC_PREPARO_AGENT_URL=http://backend:${PREPARO_PORT:-9003}
+        - NEXT_PUBLIC_ENTREGA_AGENT_URL=http://backend:${ENTREGA_PORT:-9004}
     ports:
       - "3000:3000"
     environment:
-      - FILA_AGENT_URL=http://backend:9001
-      - COZINHA_AGENT_URL=http://backend:9002
-      - PREPARO_AGENT_URL=http://backend:9003
-      - ENTREGA_AGENT_URL=http://backend:9004
+      - FILA_AGENT_URL=http://backend:${FILA_PORT:-9001}
+      - COZINHA_AGENT_URL=http://backend:${COZINHA_PORT:-9002}
+      - PREPARO_AGENT_URL=http://backend:${PREPARO_PORT:-9003}
+      - ENTREGA_AGENT_URL=http://backend:${ENTREGA_PORT:-9004}
+      - ORCHESTRATOR_URL=http://backend:${FILA_PORT:-9001}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
     depends_on:
       backend:
         condition: service_healthy

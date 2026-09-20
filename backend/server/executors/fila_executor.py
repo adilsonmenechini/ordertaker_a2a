@@ -58,6 +58,9 @@ def parse_order_text(text: str) -> tuple[str, list[PastelItem]]:
 
 
 class FilaExecutor(AgentExecutor):
+    async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
+        pass
+
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         global _queue_counter
         user_text = ""

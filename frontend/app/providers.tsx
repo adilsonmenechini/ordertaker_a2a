@@ -1,11 +1,12 @@
 "use client";
 
-import { CopilotKitProvider } from "@copilotkit/react-core/v2";
+import { CopilotKit } from "@copilotkit/react-core";
+import { OrderStateProvider } from "@/components/OrderState";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <CopilotKitProvider runtimeUrl="/api/copilotkit">
-      {children}
-    </CopilotKitProvider>
+    <CopilotKit runtimeUrl="/api/copilotkit" showDevConsole={false}>
+      <OrderStateProvider>{children}</OrderStateProvider>
+    </CopilotKit>
   );
 }
