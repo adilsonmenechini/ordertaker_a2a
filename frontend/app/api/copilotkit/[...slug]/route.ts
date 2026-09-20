@@ -19,22 +19,43 @@ function getAgentUrl(agent: string): string {
   return process.env[envKey] || `http://localhost:${9001 + ["fila", "cozinha", "preparo", "entrega"].indexOf(agent)}`;
 }
 
-function extractReplyText(result: Record<string, unknown>): string {
+export function extractAllReplyText(result: Record<string, unknown>): string {
+  const texts: string[] = [];
+
+  // Helper to extract text from parts
+  function collectFromParts(parts: Array<Record<string, unknown>>) {
+    for (const part of parts) {
+      if (part.text && typeof part.text === "string") {
+        texts.push(part.text);
+      }
+    }
+  }
+
   const task = (result.task || result) as Record<string, unknown>;
+
+  // 1. Check artifacts
   const artifacts = (task.artifacts || []) as Array<Record<string, unknown>>;
   for (const artifact of artifacts) {
     const parts = (artifact.parts || []) as Array<Record<string, unknown>>;
-    for (const part of parts) {
-      if (part.text && typeof part.text === "string") return part.text;
-    }
+    collectFromParts(parts);
   }
+
+  // 2. Check status.message.parts
   const status = (task.status || {}) as Record<string, unknown>;
   const msg = (status.message || {}) as Record<string, unknown>;
   const msgParts = (msg.parts || []) as Array<Record<string, unknown>>;
-  for (const part of msgParts) {
-    if (part.text && typeof part.text === "string") return part.text;
-  }
-  return JSON.stringify(result).slice(0, 300);
+  collectFromParts(msgParts);
+
+  // 3. Check direct message.parts (for non-task responses)
+  const directMsg = (result.message || {}) as Record<string, unknown>;
+  const directParts = (directMsg.parts || []) as Array<Record<string, unknown>>;
+  collectFromParts(directParts);
+
+  // 4. Check top-level parts
+  const topParts = (result.parts || []) as Array<Record<string, unknown>>;
+  collectFromParts(topParts);
+
+  return texts.join("\n");
 }
 
 async function callA2AAgent(
@@ -65,7 +86,7 @@ async function callA2AAgent(
   const body = await resp.json();
   if (body.error) throw new Error(`A2A ${agent} error: ${JSON.stringify(body.error)}`);
   const result = body.result || {};
-  return extractReplyText(result);
+  return extractAllReplyText(result);
 }
 
 // ── LLM-powered orchestrator agent ──────────────────────────────────
