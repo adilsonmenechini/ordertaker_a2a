@@ -31,12 +31,21 @@ Seja simpático e Use emojis! 🥟
 """
 
 
+def _clean_api_key(api_key: str) -> str:
+    """Remove non-ASCII characters from API key."""
+    return api_key.encode("ascii", "ignore").decode("ascii")
+
+
 def plan_with_llm(user_message: str) -> dict | None:
     """Try to plan order using LLM. Returns None if LLM unavailable."""
     if not HAS_LLM:
         return None
 
-    api_key = os.getenv("OPENAI_API_KEY")
+    raw_key = os.getenv("OPENAI_API_KEY")
+    if not raw_key:
+        return None
+
+    api_key = _clean_api_key(raw_key)
     if not api_key:
         return None
 

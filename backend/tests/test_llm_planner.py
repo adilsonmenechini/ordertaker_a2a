@@ -1,8 +1,8 @@
 """Tests for LLM planner with deterministic fallback — TDD RED phase."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-from client.llm_planner import plan_deterministic, plan_order
+from client.llm_planner import plan_deterministic, plan_order, plan_with_llm
 
 
 class TestPlanDeterministic:
@@ -46,3 +46,28 @@ class TestPlanOrder:
         _response, data = plan_order("1 frango")
         # Empty dict is falsy, should fallback
         assert data["nome"] == "Cliente"
+
+
+class TestPlanWithLLMKeyCleaning:
+    @patch("client.llm_planner.OpenAI")
+    def test_plan_with_llm_strips_unicode_from_key(self, mock_openai_class):
+        """LLM planner must clean non-ASCII chars from API key."""
+        import os
+        os.environ["OPENAI_API_KEY"] = "sk-test\u00f3key"  # contains ó
+        os.environ["OPENAI_BASE_URL"] = "http://localhost:20128/v1"
+
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+        mock_client.chat.completions.create.return_value = MagicMock(
+            choices=[MagicMock(message=MagicMock(content='{"nome": "Test", "itens": []}'))]
+        )
+
+        plan_with_llm("test order")
+
+        # Verify OpenAI was called with CLEANED key (no ó)
+        call_kwargs = mock_openai_class.call_args[1]
+        expected_key = "sk-testkey"
+        assert "\u00f3" not in call_kwargs["api_key"], "API key should not contain ó"
+        assert call_kwargs["api_key"] == expected_key, (
+            f"Expected '{expected_key}', got '{call_kwargs['api_key']}'"
+        )
