@@ -41,14 +41,9 @@ class PreparoExecutor(AgentExecutor):
             "✅ Pronto para entrega!",
         ]
 
-        for msg in steps:
-            await event_queue.enqueue_event(Message(role=Role.ROLE_AGENT, parts=[Part(text=msg)]))
-            await asyncio.sleep(2)
-
+        # Aggregate all steps into a SINGLE message for JSON-RPC compatibility
+        all_steps = "\n".join(steps)
+        await asyncio.sleep(2)  # Simulate processing time
         order.advance()  # PREPARO -> ENTREGA
-        await event_queue.enqueue_event(
-            Message(
-                role=Role.ROLE_AGENT,
-                parts=[Part(text=f"🚗 Pedido #{order.id} saiu para entrega!")],
-            )
-        )
+        final_msg = f"{all_steps}\n\n🚗 Pedido #{order.id} saiu para entrega!"
+        await event_queue.enqueue_event(Message(role=Role.ROLE_AGENT, parts=[Part(text=final_msg)]))

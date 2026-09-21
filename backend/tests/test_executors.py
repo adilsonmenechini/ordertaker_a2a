@@ -106,8 +106,11 @@ class TestCozinhaExecutor:
 
         await executor.execute(context, event_queue)
 
-        # Should have sent multiple messages (6 steps + final)
-        assert event_queue.enqueue_event.call_count >= 7
+        # Should have sent a single aggregated message (steps + final)
+        assert event_queue.enqueue_event.call_count == 1
+        enqueued = event_queue.enqueue_event.call_args[0][0]
+        assert any(p.text and "Aquecendo" in p.text for p in enqueued.parts)
+        assert any(p.text and "saiu da cozinha" in p.text for p in enqueued.parts)
         # Order should have advanced to PREPARO
         assert order.status == OrderStatus.PREPARO
 
@@ -164,8 +167,11 @@ class TestPreparoExecutor:
 
         await executor.execute(context, event_queue)
 
-        # Should have sent 3 steps + final
-        assert event_queue.enqueue_event.call_count >= 4
+        # Should have sent a single aggregated message (steps + final)
+        assert event_queue.enqueue_event.call_count == 1
+        enqueued = event_queue.enqueue_event.call_args[0][0]
+        assert any(p.text and "Enfatando" in p.text for p in enqueued.parts)
+        assert any(p.text and "saiu para entrega" in p.text for p in enqueued.parts)
         assert order.status == OrderStatus.ENTREGA
 
 

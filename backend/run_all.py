@@ -1,16 +1,23 @@
-"""Start all A2A agents as background processes."""
+"""Start all A2A agents as threads in a single process.
+
+All agents share the in-memory order store in models.order._orders.
+Running in separate processes would isolate state and break the
+Fila → Cozinha → Preparo → Entrega flow.
+"""
 
 from __future__ import annotations
 
 import os
 import signal
-import subprocess
 import sys
+import threading
 import time
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+from server.agent_server import create_app  # noqa: E402
 
 AGENTS = ["fila", "cozinha", "preparo", "entrega"]
 PORTS = {
@@ -20,29 +27,36 @@ PORTS = {
     "entrega": int(os.getenv("ENTREGA_PORT", "9004")),
 }
 
+_threads: list[threading.Thread] = []
 
-def main():
-    processes: list[subprocess.Popen] = []
+
+def _run_agent(agent: str, port: int) -> None:
+    print(f"  ✅ {agent.upper()} agent started (port: {port})")
+    app = create_app(agent)
+    import uvicorn  # noqa: E402 — lazily imported to avoid cyclic deps
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning")  # noqa: S104
+
+
+def main() -> None:
     print("🥟 Pastel A2A System — Starting all agents...\n")
 
     for agent in AGENTS:
-        proc = subprocess.Popen(  # noqa: S603 — trusted input from AGENTS list
-            [sys.executable, "-m", "server.agent_server", agent],
-            cwd=os.path.dirname(__file__) or ".",
+        t = threading.Thread(
+            target=_run_agent,
+            args=(agent, PORTS[agent]),
+            daemon=True,
         )
-        processes.append(proc)
-        print(f"  ✅ {agent.upper()} agent started (PID: {proc.pid}, port: {PORTS[agent]})")
+        t.start()
+        _threads.append(t)
         time.sleep(0.5)
 
-    print(f"\n🎉 All {len(AGENTS)} agents running!")
+    print(f"\n🎉 All {len(AGENTS)} agents running (shared state)!")
     print("Press Ctrl+C to stop all agents.\n")
 
-    def shutdown(sig, frame):
+    def shutdown(sig: object, frame: object) -> None:  # noqa: A001
         print("\n🛑 Shutting down all agents...")
-        for p in processes:
-            p.terminate()
-        for p in processes:
-            p.wait()
+        for t in _threads:
+            t.join(timeout=5)
         print("👋 All agents stopped.")
         sys.exit(0)
 

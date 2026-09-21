@@ -44,14 +44,10 @@ class CozinhaExecutor(AgentExecutor):
             "✅ Cozinha finalizou o pedido!",
         ]
 
-        for step in steps:
-            await event_queue.enqueue_event(Message(role=Role.ROLE_AGENT, parts=[Part(text=step)]))
-            await asyncio.sleep(1.5)
-
+        # Aggregate all steps into a SINGLE message for JSON-RPC compatibility
+        # Streaming via SSE would require return_immediately: true + GetTask polling
+        all_steps = "\n".join(steps)
+        await asyncio.sleep(1.5)  # Simulate processing time
         order.advance()  # COZINHA -> PREPARO
-        await event_queue.enqueue_event(
-            Message(
-                role=Role.ROLE_AGENT,
-                parts=[Part(text=f"🎯 Pedido #{order.id} saiu da cozinha e está no preparo.")],
-            )
-        )
+        final_msg = f"{all_steps}\n\n🎯 Pedido #{order.id} saiu da cozinha e está no preparo."
+        await event_queue.enqueue_event(Message(role=Role.ROLE_AGENT, parts=[Part(text=final_msg)]))
